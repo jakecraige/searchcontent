@@ -1,0 +1,8 @@
+name = Search Content
+description = Used to search content on find content page
+package = Poetic Systems
+core = 7.x
+configure = admin/config/content/searchcontent
+
+files[] = searchcontent.module
+files[] = searchcontent.admin.inc

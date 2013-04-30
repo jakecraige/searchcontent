@@ -1,0 +1,130 @@
+<?php
+
+/**
+ * @file
+ * Search Content .module file
+ *
+ * Simple module to search content by title on form content page
+ */
+
+function searchcontent_init() {
+  drupal_add_css(drupal_get_path('module', 'searchcontent') . '/searchcontent.css'
+      ,array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+}
+/**
+ * Implements hook_menu().
+ */
+/*function searchcontent_menu() {
+  // Module settings.
+  $items['admin/config/content/searchcontent'] = array(
+    'title' => 'Search Content',
+    'description' => 'Configuration for search content module.',
+    'page callback' => 'searchcontent_display_pathspecific',
+    'access arguments' => array('administer searchcontent'),
+    'file' => 'searchcontent.admin.inc',
+    'file path' => drupal_get_path('module', 'searchcontent'),
+  );
+  return $items;
+}*/
+
+/**
+ * Implements hook_permission().
+ */
+/*function searchcontent_permission() {
+  return array(
+    'administer searchcontent' => array(
+      'title' => t('Administer Search Content'),
+      'description' => t('Perform administration tasks for Search Content module.'),
+    ),
+  );
+}*/
+
+function searchcontent_form_alter(&$form, &$form_state, $form_id) {
+  if($form_id == 'node_admin_content') {
+    $keywords = variable_get('searchcontent_keywords', '');
+
+    if(!empty($form_state['input']['searchcontent_search'])) {
+      variable_set('searchcontent_keywords',
+                    $form_state['input']['searchcontent_search']);
+    }
+    //$form['admin']['options']['#attributes']['class'][] = 'searchcontent_update';
+    //$form['filter']['filters']['#attributes'] = array( 'class' => array('clearfix'));
+
+    $form['searchcontent_box'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Search by Title'),
+      '#attributes' => array('class' => array('container-inline')),
+      '#weight' => -1,
+    );
+    $form['searchcontent_box']['searchcontent_search'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $keywords,
+      '#weight' => -10,
+      '#size' => 38,
+    );
+    $form['searchcontent_box']['searchcontent_submit'] = array (
+      '#type' => 'submit',
+      '#value' => 'Search',
+      '#weight' => -9,
+    );
+    $form['searchcontent_box']['searchcontent_clear'] = array (
+      '#type' => 'submit',
+      '#value' => 'Clear',
+      '#weight' => -8,
+      '#submit' => array('searchcontent_delete_keywords'),
+    );
+
+    if($keywords != '') {
+      //$form['admin']['nodes']['#options'][6]['title']['data']['#title'] = 'test';
+      //TODO: Can probably do this in one foreach
+      $newarray = array();
+      foreach($form['admin']['nodes']['#options'] as $key => $node) {
+        $newarray[$key] = $node;
+      }
+      $titles = array();
+      foreach($newarray as $key => $value) {
+        $titles[$key] = $value['title']['data']['#title'];
+      }
+
+      $search_results = searchcontent_search($keywords, $titles);
+      $nodes = $form['admin']['nodes']['#options'];
+
+      //unset($form['admin']['nodes']['#options']);
+      $form['admin']['nodes']['#options'] = searchcontent_recreate_array($search_results, $nodes);
+    }
+  }
+  return;
+}
+
+function searchcontent_recreate_array($search_results, $nodes) {
+  //$final = array();
+  foreach($nodes as $key => $node) {
+    $title = $node['title']['data']['#title'];
+    foreach($search_results as $search_result) {
+      if(!stristr($title, $search_result)) {
+        unset($nodes[$key]);
+      }
+    }
+  }
+  return $nodes;
+}
+
+function searchcontent_search($keywords, $titles) {
+  $keywords = explode(' ', $keywords);
+  $newtitle = array();
+  if(is_array($keywords) && is_array($titles)) {
+    foreach($titles as $key => $title) {
+      foreach($keywords as $keyword) {
+        if(stristr($title, $keyword)) {
+          $newtitle[$key] = $title;
+        }
+      }
+      //dpm($key .'->'. $title);
+    }
+  }
+  return $newtitle;
+}
+
+function searchcontent_delete_keywords() {
+  variable_del('searchcontent_keywords');
+}

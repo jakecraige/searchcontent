@@ -14,30 +14,35 @@ function searchcontent_init() {
 /**
  * Implements hook_menu().
  */
-/*function searchcontent_menu() {
+function searchcontent_menu() {
   // Module settings.
-  $items['admin/config/content/searchcontent'] = array(
+  /*$items['admin/config/content/searchcontent'] = array(
     'title' => 'Search Content',
     'description' => 'Configuration for search content module.',
     'page callback' => 'searchcontent_display_pathspecific',
     'access arguments' => array('administer searchcontent'),
     'file' => 'searchcontent.admin.inc',
     'file path' => drupal_get_path('module', 'searchcontent'),
+  );*/
+  $items['admin/content/searchcontent/autocomplete'] = array(
+    'page_callback' => 'searchcontent_autocomplete',
+    'access arguments' => array('access searchcontent form'),
+    'type' => MENU_CALLBACK,
   );
   return $items;
-}*/
+}
 
 /**
  * Implements hook_permission().
  */
-/*function searchcontent_permission() {
+function searchcontent_permission() {
   return array(
-    'administer searchcontent' => array(
-      'title' => t('Administer Search Content'),
+    'access searchcontent form' => array(
+      'title' => t('Use search content form'),
       'description' => t('Perform administration tasks for Search Content module.'),
     ),
   );
-}*/
+}
 
 function searchcontent_form_alter(&$form, &$form_state, $form_id) {
   if($form_id == 'node_admin_content') {
@@ -61,6 +66,7 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => $keywords,
       '#weight' => -10,
       '#size' => 38,
+      '#autocomplete_path' => 'admin/content/searchcontent/autocomplete',
     );
     $form['searchcontent_box']['searchcontent_submit'] = array (
       '#type' => 'submit',
@@ -127,4 +133,16 @@ function searchcontent_search($keywords, $titles) {
 
 function searchcontent_delete_keywords() {
   variable_del('searchcontent_keywords');
+}
+
+function searchcontent_autocomplete($string = '') {
+  $items = array();
+ /* $query = db_query("SELECT title FROM {node}")->fetchCol();
+  foreach($query as $row) {
+   $items[$row->title] = check_plain($row->title);
+  }*/
+  $items['about'] = 'about';
+  $items['contact'] = 'contact';
+  drupal_json_output($items);
+  //print 'test';
 }

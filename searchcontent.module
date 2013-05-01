@@ -66,8 +66,8 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
       '#default_value' => $keywords,
       '#weight' => -10,
       '#size' => 38,
-      '#autocomplete_path' => 'admin/content/searchcontent/autocomplete',
     );
+    //'#autocomplete_path' => 'admin/content/searchcontent/autocomplete',
     $form['searchcontent_box']['searchcontent_submit'] = array (
       '#type' => 'submit',
       '#value' => 'Search',
@@ -103,16 +103,16 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function searchcontent_recreate_array($search_results, $nodes) {
-  //$final = array();
+  $final = array();
   foreach($nodes as $key => $node) {
     $title = $node['title']['data']['#title'];
     foreach($search_results as $search_result) {
-      if(!stristr($title, $search_result)) {
-        unset($nodes[$key]);
-      }
+     if($title == $search_result) {
+       $final[$key] = $node;
+     }
     }
   }
-  return $nodes;
+  return $final;
 }
 
 function searchcontent_search($keywords, $titles) {
@@ -125,7 +125,6 @@ function searchcontent_search($keywords, $titles) {
           $newtitle[$key] = $title;
         }
       }
-      //dpm($key .'->'. $title);
     }
   }
   return $newtitle;

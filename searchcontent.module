@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Search Content .module file
@@ -14,38 +13,33 @@ function searchcontent_init() {
 /**
  * Implements hook_menu().
  */
-function searchcontent_menu() {
+/*function searchcontent_menu() {
   // Module settings.
-  /*$items['admin/config/content/searchcontent'] = array(
+  $items['admin/config/content/searchcontent'] = array(
     'title' => 'Search Content',
     'description' => 'Configuration for search content module.',
     'page callback' => 'searchcontent_display_pathspecific',
     'access arguments' => array('administer searchcontent'),
     'file' => 'searchcontent.admin.inc',
     'file path' => drupal_get_path('module', 'searchcontent'),
-  );*/
-  $items['admin/content/searchcontent/autocomplete'] = array(
-    'page_callback' => 'searchcontent_autocomplete',
-    'access arguments' => array('access searchcontent form'),
-    'type' => MENU_CALLBACK,
   );
   return $items;
-}
+}*/
 
 /**
  * Implements hook_permission().
  */
-function searchcontent_permission() {
+/*function searchcontent_permission() {
   return array(
-    'access searchcontent form' => array(
-      'title' => t('Use search content form'),
+    'administer searchcontent' => array(
+      'title' => t('Administer Search Content'),
       'description' => t('Perform administration tasks for Search Content module.'),
     ),
   );
-}
+}*/
 
 function searchcontent_form_alter(&$form, &$form_state, $form_id) {
-  if($form_id == 'node_admin_content') {
+  if($form_id == 'searchcontent_admin_content') {
     $keywords = variable_get('searchcontent_keywords', '');
 
     if(!empty($form_state['input']['searchcontent_search'])) {
@@ -54,8 +48,7 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
     }
     //$form['admin']['options']['#attributes']['class'][] = 'searchcontent_update';
     //$form['filter']['filters']['#attributes'] = array( 'class' => array('clearfix'));
-
-    $form['searchcontent_box'] = array(
+    /*$form['searchcontent_box'] = array(
       '#type' => 'fieldset',
       '#title' => t('Search by Title'),
       '#attributes' => array('class' => array('container-inline')),
@@ -67,7 +60,6 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
       '#weight' => -10,
       '#size' => 38,
     );
-    //'#autocomplete_path' => 'admin/content/searchcontent/autocomplete',
     $form['searchcontent_box']['searchcontent_submit'] = array (
       '#type' => 'submit',
       '#value' => 'Search',
@@ -78,10 +70,9 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
       '#value' => 'Clear',
       '#weight' => -8,
       '#submit' => array('searchcontent_delete_keywords'),
-    );
-
-    if($keywords != '') {
-      //$form['admin']['nodes']['#options'][6]['title']['data']['#title'] = 'test';
+    );*/
+    /*if($keywords != '') {
+      //$form['admin']['nodes']['#options'][6]['title']['data']['#title'] = '';
       //TODO: Can probably do this in one foreach
       $newarray = array();
       foreach($form['admin']['nodes']['#options'] as $key => $node) {
@@ -91,15 +82,67 @@ function searchcontent_form_alter(&$form, &$form_state, $form_id) {
       foreach($newarray as $key => $value) {
         $titles[$key] = $value['title']['data']['#title'];
       }
-
       $search_results = searchcontent_search($keywords, $titles);
       $nodes = $form['admin']['nodes']['#options'];
 
       //unset($form['admin']['nodes']['#options']);
       $form['admin']['nodes']['#options'] = searchcontent_recreate_array($search_results, $nodes);
-    }
+     //(node_admin_nodes());
+      //array_unshift($_SESSION['node_overview_filter'], array('type', 'cats'));
+   }*/
   }
+$form['filter']['filters']['status']['filters']['searchcontent_search'] = array(
+      '#type' => 'textfield',
+     '#title' => 'title',
+      '#default_value' => $keywords,
+      '#weight' => -10,
+      '#size' => 25,
+   );
+$form['filter']['filters']['status']['actions']['searchcontent_clear'] = array (
+      '#type' => 'submit',
+      '#value' => 'Clear Search',
+      '#submit' => array('searchcontent_delete_keywords'),
+    );
+//($_SESSION['node_overview_filter']);
+//(node_filter_form());
+//($form);
   return;
+}
+function searchcontent_menu_alter(&$items) {
+  $items['admin/content'] = array(
+    'title' => 'Content',
+    'description' => 'Find and manage content.',
+    'page callback' => 'searchcontent_hijack',
+    'access arguments' => array('access content overview'),
+    'weight' => -10,
+    'file' => drupal_get_path('module', 'node') . '/node.admin.inc',
+  );
+}
+
+function searchcontent_hijack() {
+  return drupal_get_form('searchcontent_admin_content');
+}
+function searchcontent_admin_content() {
+  $content = node_admin_content();
+  dsm($content);
+  $content['admin']['options']['#title'] = 'TEST';
+
+  $content['filter']['filters']['status']['filters']['searchcontent_search'] = array(
+      '#type' => 'textfield',
+     '#title' => 'title',
+      '#default_value' => $keywords,
+      '#weight' => -10,
+      '#size' => 25,
+   );
+ $content['filter']['filters']['status']['actions']['searchcontent_clear'] = array (
+      '#type' => 'submit',
+      '#value' => 'Clear Search',
+      '#submit' => array('searchcontent_delete_keywords'),
+    );
+
+
+  unset($content['admin']['pager']);
+  return $content;
 }
 
 function searchcontent_recreate_array($search_results, $nodes) {
@@ -122,7 +165,7 @@ function searchcontent_search($keywords, $titles) {
     foreach($titles as $key => $title) {
       foreach($keywords as $keyword) {
         if(stristr($title, $keyword)) {
-          $newtitle[$key] = $title;
+        $newtitle[$key] = $title;
         }
       }
     }
@@ -132,16 +175,4 @@ function searchcontent_search($keywords, $titles) {
 
 function searchcontent_delete_keywords() {
   variable_del('searchcontent_keywords');
-}
-
-function searchcontent_autocomplete($string = '') {
-  $items = array();
- /* $query = db_query("SELECT title FROM {node}")->fetchCol();
-  foreach($query as $row) {
-   $items[$row->title] = check_plain($row->title);
-  }*/
-  $items['about'] = 'about';
-  $items['contact'] = 'contact';
-  drupal_json_output($items);
-  //print 'test';
 }
